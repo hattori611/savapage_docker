@@ -1,0 +1,252 @@
+#!/bin/bash
+#
+# This file is part of the SavaPage project <https://www.savapage.org>.
+# Copyright (c) 2011-2020 Datraverse B.V.
+# Author: Rijk Ravestein.
+#
+# SPDX-FileCopyrightText: 2011-2020 Datraverse B.V. <info@datraverse.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# For more information, please contact Datraverse B.V. at this
+# address: info@datraverse.com
+#
+
+### BEGIN INIT INFO
+# Provides:          savapage-app-server
+# Required-Start:    cups $remote_fs $syslog $network
+# Required-Stop:     cups $remote_fs $syslog $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: SavaPage Application Server
+# Description:       Controls the Application Server daemon
+### END INIT INFO
+
+#
+# chkconfig: 345 99 05
+# description: Java deamon script
+#
+
+#------------------------------------------------------------------------------
+# Get the absolute path of this (symlinked) file
+# This needed since a simpe `dirname $0`/.server-common.inc.sh is NOT symlink proof 
+#------------------------------------------------------------------------------
+SELF_PATH=$(cd -P -- "$(dirname -- "$0")" && pwd -P) && SELF_PATH=$SELF_PATH/$(basename -- "$0")
+# resolve symlinks
+while [ -h $SELF_PATH ]; do
+    # 1) cd to directory of the symlink
+    # 2) cd to the directory of where the symlink points
+    # 3) get the pwd
+    # 4) append the basename
+    DIR=$(dirname -- "$SELF_PATH")
+    SYM=$(readlink $SELF_PATH)
+    SYM=$DIR
+    SELF_PATH=$(cd $DIR && cd $(dirname -- "$SYM") && pwd)/$(basename -- "$SYM")
+done
+#--------------------------------------------------------------------
+currentdir=`dirname ${SELF_PATH}`
+
+. $currentdir/.server-common.inc.sh
+. $currentdir/.java-version.inc.bsh
+. $currentdir/.app-version.inc.sh
+
+appServerCustomFile=$SERVER_HOME/custom/app-server.conf
+
+if [ -f $appServerCustomFile ]
+then
+. $appServerCustomFile
+fi
+
+umask 077
+
+if [ -z "$REPO" ]
+then
+  REPO="$SERVER_HOME"/lib
+fi
+
+if [ -z "$JAVA_IO_TMPDIR" ]
+then
+    APP_JAVA_IO_TMPDIR=$SERVER_HOME/tmp
+else
+    APP_JAVA_IO_TMPDIR=${JAVA_IO_TMPDIR}
+fi
+
+# GC log parameters for Java 8 and 9+.
+readonly _java_version=$(_get_java_version)
+if [ ${_java_version} -gt "8" ]; then
+  JVM_X_ARGS="-Xlog:gc*:file="$SERVER_HOME"/logs/gc.log:tags,uptime,time:filecount=5,filesize=1024"
+else
+  JVM_X_ARGS="-XX:+PrintGCDetails -XX:+PrintGCApplicationConcurrentTime -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=1M -Xloggc:"$SERVER_HOME"/logs/gc.log"
+fi
+
+if [ ${_java_version} -gt "10" ]; then
+  JVM_X_ARGS="${JVM_X_ARGS} --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED"
+fi
+
+DAEMON_ARGS="-server $CUSTOM_JVM_ARGS $JVM_X_ARGS -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djava.io.tmpdir="$APP_JAVA_IO_TMPDIR" -Dlog4j.configuration="file://$SERVER_HOME/lib/log4j.properties" -Dserver.home="$SERVER_HOME" -Dcom.sun.management.config.file="$SERVER_HOME/jmxremote.properties" -Djavax.net.ssl.keyStore="$SERVER_HOME/jmxremote.ks" -Djavax.net.ssl.keyStorePassword=savapage -Dwicket.configuration=deployment -Dsavapage.war.file=savapage-server-$APP_VERSION.war org.savapage.server.WebServer"
+
+#======================================================================= 
+# Continue with original script : set interface parameters
+#======================================================================= 
+
+serviceNameLo="savapage"                                   # service name with the first letter in lowercase
+serviceName="SavaPage"                                     # service name
+serviceNameFull="SavaPage Open Print Portal"               # full service name
+serviceUser="savapage"                                     # OS user name for the service
+serviceGroup=`id -g -n ${serviceUser}`                     # OS group name for the service (primary group of serviceUser)
+applDir="$SERVER_HOME"                                     # server directory 
+serviceLogFile="$LOG_DIR/service.log"                      # log file for StdOut/StdErr
+maxShutdownTime=20                                         # maximum number of seconds to wait for the daemon to terminate normally
+pidFile="$SERVER_PID"                                      # name of PID file
+javaCommand="java"                                         # name of the Java launcher without the path
+javaArgs="$DAEMON_ARGS"                                    # arguments for Java launcher
+
+javaCommandLine="$javaCommand $javaArgs"                   # command line to start the Java service application
+javaCommandLineKeyword="org.savapage.server.WebServer"     # a keyword that occurs on the commandline, used to detect an already running service process and to distinguish it from others
+ 
+# Makes the file $1 writable by the group $serviceGroup.
+function makeFileWritable {
+   local filename="$1"
+   touch $filename || return 1
+   chown ${serviceUser}:${serviceGroup} $filename || return 1
+   chmod g+w $filename || return 1
+   return 0; }
+ 
+# Returns 0 if the process with PID $1 is running.
+function checkProcessIsRunning {
+   local pid="$1"
+   if [ -z "$pid" -o "$pid" == " " ]; then return 1; fi
+   if [ ! -e /proc/$pid ]; then return 1; fi
+   return 0; }
+ 
+# Returns 0 if the process with PID $1 is our Java service process.
+function checkProcessIsOurService {
+   local pid="$1"
+   if [ "$(ps -p $pid --no-headers -o comm)" != "$javaCommand" ]; then return 1; fi
+   grep -q --binary -F "$javaCommandLineKeyword" /proc/$pid/cmdline
+   if [ $? -ne 0 ]; then return 1; fi
+   return 0; }
+ 
+# Returns 0 when the service is running and sets the variable $pid to the PID.
+function getServicePID {
+   if [ ! -f $pidFile ]; then return 1; fi
+   pid="$(<$pidFile)"
+   checkProcessIsRunning $pid || return 1
+   checkProcessIsOurService $pid || return 1
+   return 0; }
+ 
+function startServiceProcess {
+   cd $applDir || return 1
+   cmd="umask 077;CLASSPATH=$CLASSPATH nohup $javaCommandLine"
+   su -m $serviceUser -s $SHELL -c "$cmd"
+   #rm -f $pidFile
+   #makeFileWritable $pidFile || return 1
+   #makeFileWritable $serviceLogFile || return 1
+   #cmd="umask 077;CLASSPATH=$CLASSPATH nohup $javaCommandLine >>$serviceLogFile 2>&1 & echo \$! >$pidFile"  
+   #if [ `whoami` = $serviceUser ]; then
+   #    $SHELL -c "$cmd" || return 1
+   #else
+   #    su -m $serviceUser -s $SHELL -c "$cmd" || return 1
+   #fi
+   #sleep 0.1
+   #pid="$(<$pidFile)"
+   #if checkProcessIsRunning $pid; then :; else
+   #   echo -ne "\n$serviceNameFull start failed, see logfile."
+   #   return 1
+   #fi
+   #return 0; }
+   }
+ 
+function stopServiceProcess {
+   kill $pid || return 1
+   for ((i=0; i<maxShutdownTime*10; i++)); do
+      checkProcessIsRunning $pid
+      if [ $? -ne 0 ]; then
+         rm -f $pidFile
+         return 0
+         fi
+      sleep 0.1
+      done
+   echo -e "\n$serviceNameFull did not terminate within $maxShutdownTime seconds, sending SIGKILL..."
+   kill -s KILL $pid || return 1
+   local killWaitTime=15
+   for ((i=0; i<killWaitTime*10; i++)); do
+      checkProcessIsRunning $pid
+      if [ $? -ne 0 ]; then
+         rm -f $pidFile
+         return 0
+         fi
+      sleep 0.1
+      done
+   echo "Error: $serviceNameFull could not be stopped within $maxShutdownTime+$killWaitTime seconds!"
+   return 1; }
+ 
+function startService {
+   getServicePID
+   if [ $? -eq 0 ]; then echo -n "$serviceNameFull is already running"; RETVAL=0; return 0; fi
+   echo -n "Starting $serviceNameFull   "
+   startServiceProcess
+   if [ $? -ne 0 ]; then RETVAL=1; echo "failed"; return 1; fi
+   echo "started PID=$pid"
+   RETVAL=0
+   return 0; }
+ 
+function stopService {
+   getServicePID
+   if [ $? -ne 0 ]; then echo -n "$serviceNameFull is not running"; RETVAL=0; echo ""; return 0; fi
+   echo -n "Stopping $serviceNameFull   "
+   stopServiceProcess
+   if [ $? -ne 0 ]; then RETVAL=1; echo "failed"; return 1; fi
+   echo "stopped PID=$pid"
+   RETVAL=0
+   return 0; }
+ 
+function checkServiceStatus {
+   echo -n "Checking for $serviceNameFull:   "
+   if getServicePID; then
+    echo "running PID=$pid"
+    RETVAL=0
+   else
+    echo "stopped"
+    RETVAL=3
+   fi
+   return 0; }
+ 
+function main {
+   RETVAL=0
+   case "$1" in
+      start)                                               # starts the Java program as a Linux service
+         startService
+         ;;
+      stop)                                                # stops the Java program service
+         stopService
+         ;;
+      restart)                                             # stops and restarts the service
+         stopService && startService
+         ;;
+      status)                                              # displays the service status
+         checkServiceStatus
+         ;;
+      *)
+         echo "Usage: $0 {start|stop|restart|status}"
+         exit 1
+         ;;
+      esac
+   exit $RETVAL
+}
+ 
+main $1
+
+# end-of-script

@@ -1,0 +1,251 @@
+#!/bin/bash
+# vim: set ts=4 sts=4 sw=4 et:
+
+DB_NAME="${DB_NAME:-empty}"
+DB_USER="${DB_USER:-empty}"
+DB_PASSWORD="${DB_PASSWORD:-empty}"
+
+DEFAULT_PAPERSIZE="${DEFAULT_PAPERSIZE:-a4}"
+DEFAULT_LOCALE="${DEFAULT_LOCALE:-}"
+DEFAULT_PAPERSIZE="${DEFAULT_PAPERSIZE:-}"
+GLOBAL_CURRENCYCODE="${GLOBAL_CURRENCYCODE:-}"
+AUTH_LDAP_ADMIN="${AUTH_LDAP_ADMIN:-}"
+AUTH_LDAP_PASSWORD="${AUTH_LDAP_PASSWORD:-}"
+AUTH_LDAP_SERVER="${AUTH_LDAP_SERVER:-}"
+AUTH_LDAP_BASEDN="${AUTH_LDAP_BASEDN:-}"
+AUTH_LDAP_PORT="${AUTH_LDAP_PORT:-}"
+AUTH_LDAP_USESSL="${AUTH_LDAP_USESSL:-}"
+AUTH_LDAP_SSL_HOSTNAME_VERIFICATION_DISABLE="${AUTH_LDAP_SSL_HOSTNAME_VERIFICATION_DISABLE:-}"
+AUTH_LDAP_TRUST_SELFSIGNED_CERT="${AUTH_LDAP_TRUST_SELFSIGNED_CERT:-}"
+AUTH_LDAP_USE_NESTED_GROUPS="${AUTH_LDAP_USE_NESTED_GROUPS:-}"
+MAIL_SMTP_HOST="${MAIL_SMTP_HOST:-}"
+MAIL_SMTP_PORT="${MAIL_SMTP_PORT:-}"
+MAIL_SMTP_USERNAME="${MAIL_SMTP_USERNAME:-}"
+MAIL_SMTP_PASSWORD="${MAIL_SMTP_PASSWORD:-}"
+MAIL_SMTP_MAILFROM_ADRESS="${MAIL_SMTP_MAILFROM_ADRESS:-}"
+MAIL_SMTP_SECURITY="${MAIL_SMTP_SECURITY:-}"
+
+
+LDAP_RADIUS_ACCESS_GROUP="${LDAP_RADIUS_ACCESS_GROUP:-}"
+RADIUS_CLIENT_CREDENTIALS="${RADIUS_CLIENT_CREDENTIALS:-}"
+
+## to turn on debugging, use "-x -f -l stdout"
+#RADIUSD_ARGS="${RADIUSD_ARGS:--f -l stdout}"
+#
+server.properties_subst() {
+    sed -i -e "s/${1}/${2}/g" /opt/savapage/serverBuiltin/server.properties
+}
+#
+#mschap_subst() {
+#    sed -i -e "s/${1}/${2}/g" /etc/raddb/mods-available/mschap
+#}
+#
+#krb5_subst() {
+#    sed -i -e "s/${1}/${2}/g" /etc/krb5.conf
+#}
+#
+#samba_subst() {
+#    sed -i -e "s/${1}/${2}/g" /etc/samba/smb.conf
+#}
+
+#cups_subst() {
+#echo "cups subst"
+#}
+
+## substitute variables into LDAP configuration file
+
+persistantFiles="admin.properties jmxremote.access jmxremote.ks jmxremote.password jmxremote.properties"
+persistantFolders="custom data examples ext lib logs tmp"
+staticFolders="bin"
+staticFiles="server.properties"
+
+for file in $persistantFiles
+do
+    if [ ! -f /opt/savapage/server/$file ]; then
+    cp /opt/savapage/serverBuiltin/$file /opt/savapage/server/$file
+    fi
+done
+
+for folder in $persistantFolders
+do
+    if [ ! -f /opt/savapage/server/$folder ]; then
+    cp -R /opt/savapage/serverBuiltin/$folder /opt/savapage/server/$folder
+    fi
+done
+
+for file in $staticFiles
+do
+    if [ ! -e /opt/savapage/server/$file ]; then
+    ln -s /opt/savapage/serverBuiltin/$file /opt/savapage/server/$file
+    fi
+done
+
+for folder in $staticFolders
+do
+    if [ ! -e /opt/savapage/server/$folder ]; then
+    ln -s /opt/savapage/serverBuiltin/$folder /opt/savapage/server/$folder
+    fi
+done
+
+
+# set papersize
+echo "Overwrite default papersize"
+echo $DEFAULT_PAPERSIZE > /etc/papersize
+
+# update cups config Browsing off
+
+
+
+server.properties_subst "@DB_NAME@" "${DB_NAME}"
+server.properties_subst "@DB_USER@" "${DB_USER}"
+server.properties_subst "@DB_PASSWORD@" "${DB_PASSWORD}"
+
+rm /opt/savapage/server/bin/linux-x64/app-server
+cp /template/app-server_interactive /opt/savapage/server/bin/linux-x64/app-server
+
+chown -R savapage /opt/savapage
+chmod +x /opt/savapage/server/bin/linux-x64/app-server
+
+
+# initiate database
+sudo -u savapage /opt/savapage/server/bin/linux-x64/savapage-db --db-init
+
+# overwrite settings defined in docker-compose
+
+# local settings
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-locale --value de-DE
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-papersize --value iso-a4
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name financial.global.currency-code --value EUR
+
+# ldap settings
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-dn --value cn=savapage-binduser,OU=Management,OU=GLOBAL,DC=schule,DC=lan
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-password --value Muster! 
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.host --value server
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.basedn --value DC=schule,DC=lan
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.port --value 389
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl --value Y
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.ssl.hostname-verification-disable --value Y
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl.trust-self-signed  --value Y
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.nested-group-search  --value Y
+
+# mail settings
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.host --value smtphost
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.port --value 465
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.username --value savapage
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.password --value mailpassword
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.from.address --value savapage@mail.com
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.security --value ssl # or starttls
+
+#run cups in nondemand mode
+/usr/sbin/cupsd -f &
+#exec /usr/local/bin/tini -- /usr/sbin/cupsd -f
+
+exec /usr/local/bin/tini -- /opt/savapage/server/bin/linux-x64/app-server start
+
+
+#exec /usr/local/bin/tini -- /bin/bash
+
+
+#ldap_subst "@LDAP_PASS@" "${LDAP_PASS}"
+#ldap_subst "@LDAP_BASEDN@" "${LDAP_BASEDN}"
+#ldap_subst "@LDAP_USER_BASEDN@" "${LDAP_USER_BASEDN}"
+#ldap_subst "@LDAP_GROUP_BASEDN@" "${LDAP_GROUP_BASEDN}"
+#ldap_subst "@LDAP_CLIENT_BASEDN@" "${LDAP_CLIENT_BASEDN}"
+#mschap_subst "@LDAP_DOMAIN_SHORT@" "${LDAP_DOMAIN_SHORT}"
+#krb5_subst "@LDAP_DOMAIN@" "${LDAP_DOMAIN}"
+#samba_subst "@LDAP_HOSTNAME@" "${LDAP_HOSTNAME}"
+#samba_subst "@LDAP_DOMAIN@" "${LDAP_DOMAIN}"
+#samba_subst "@LDAP_DOMAIN_SHORT@" "${LDAP_DOMAIN_SHORT}"
+
+## enable ldap
+#ln -s /etc/raddb/mods-available/ldap /etc/raddb/mods-enabled/ldap
+##ln -s /etc/raddb/mods-available/ntlm_auth /etc/raddb/mods-enabled/ntlm_auth
+#
+## write ntlm_auth module (seems to break --domain variable if done via subst )
+#echo "exec ntlm_auth {
+#        wait = yes
+#        program = \"/usr/bin/ntlm_auth --request-nt-key --domain=${LDAP_DOMAIN_SHORT}  --username=%{mschap:User-Name} --password=%{User-Password}\"
+#}" > /etc/raddb/mods-available/ntlm_auth
+#
+#
+## configure the default site for ldap
+#sed -i -e 's/-ldap/ldap/g' /etc/raddb/sites-available/default
+#sed -i -e '/^#[[:space:]]*Auth-Type LDAP {$/{N;N;s/#[[:space:]]*Auth-Type LDAP {\n#[[:space:]]*ldap\n#[[:space:]]*}/        Auth-Type LDAP {\n                ldap\n        }/}' /etc/raddb/sites-available/default
+#sed -i -e 's/^#[[:space:]]*ldap/        ldap/g' /etc/raddb/sites-available/default
+#
+## configure the inner-tunnel site for ldap
+#sed -i -e 's/-ldap/ldap/g' /etc/raddb/sites-available/inner-tunnel
+#sed -i -e '/^#[[:space:]]*Auth-Type LDAP {$/{N;N;s/#[[:space:]]*Auth-Type LDAP {\n#[[:space:]]*ldap\n#[[:space:]]*}/        Auth-Type LDAP {\n                ldap\n        }/}' /etc/raddb/sites-available/inner-tunnel
+#sed -i -e 's/^#[[:space:]]*ldap/        ldap/g' /etc/raddb/sites-available/inner-tunnel
+#
+#use_distro_provided_file() {
+#    # copy the distro-provided file to a new location if it
+#    # does not already exist
+#    [[ -f "${1}.dist" ]] || mv -f "${1}" "${1}.dist"
+#    # copy the distro-provided file to the original location
+#    cp -a "${1}.dist" "${1}"
+#}
+
+# Make sure we always start with the original distro-provided copies of
+# these files. On container restart, we will always repeat the same actions
+# on unmodified copies, allowing the process to be idempotent.
+#use_distro_provided_file /etc/raddb/sites-available/default
+#use_distro_provided_file /etc/raddb/clients.conf
+#
+## configure the LDAP group for access
+#if [[ -n "$LDAP_RADIUS_ACCESS_GROUP" ]]; then
+#    # create a temporary file with the access rules so that sed can read
+#    # it into the correct place in the /etc/raddb/sites-available/default file
+#    # WARNING: radiusd is INCREDIBLY picky about the format
+#    cat > /root/ldap-radius-access-group << EOF
+#        # only allow access to a specific LDAP group
+#        if (Ldap-Group == "${LDAP_RADIUS_ACCESS_GROUP}") {
+#            noop
+#        }
+#        else {
+#            reject
+#        }
+#
+#EOF
+#
+#    sed -i -e '/^post-auth {$/r /root/ldap-radius-access-group' /etc/raddb/sites-available/default
+#fi
+
+# setup clients
+#IFS=$',' read -ra RADIUS_CLIENT_CREDENTIALS_ARRAY <<< "$RADIUS_CLIENT_CREDENTIALS"
+#for i in "${RADIUS_CLIENT_CREDENTIALS_ARRAY[@]}"; do
+#    CLIENT="${i%%:*}"
+#    SECRET="${i#*:}"
+#    cat >> /etc/raddb/clients.conf << EOF
+#client $CLIENT {
+#    secret = $SECRET
+#    shortname = $CLIENT
+#    ipaddr = $CLIENT
+#    nas_type = other
+#}
+#EOF
+#done
+#
+##add freerad to winbindd
+#usermod -a -G winbindd_priv freerad
+## get sure winbind runs
+#/etc/init.d/winbind restart
+#
+## check AD membership
+#net ads testjoin -k
+#
+#if [ $? == 0 ]
+#then
+#  echo "Already domain joined"
+#else
+#  echo "joining domain"
+#  net ads join -U ${LDAP_DOMAIN_ADMIN}%${LDAP_DOMAIN_ADMIN_PW}
+#  /etc/init.d/winbind restart
+#  wbinfo -P
+#fi
+
+#exec /usr/local/bin/tini -- /usr/sbin/freeradius $RADIUSD_ARGS
+#exec /usr/local/bin/tini  -- /opt/savapage/server/bin/linux-x64/app-server
+
+
+
