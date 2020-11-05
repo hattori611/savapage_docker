@@ -16,6 +16,10 @@ Environment Variables
 - `AUTH_LDAP_ADMIN` - LDAP server user (default: "cn=admin,dc=example,dc=com")
 - `AUTH_LDAP_PASSWORD` - LDAP server password (default: "password")
 - `AUTH_LDAP_BASEDN` - LDAP server Base DN (default: "dc=example,dc=com")
+- `AUTH_METHOD` - none, unix, ldap
+- `AUTH_LDAP_SCHEMA_TYPE` - ACTIVE_DIRECTORY or NOVELL_EDIRECTORY
+
+- 
 
 
 

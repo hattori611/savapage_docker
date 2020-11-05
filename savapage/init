@@ -5,10 +5,11 @@ DB_NAME="${DB_NAME:-empty}"
 DB_USER="${DB_USER:-empty}"
 DB_PASSWORD="${DB_PASSWORD:-empty}"
 
-DEFAULT_PAPERSIZE="${DEFAULT_PAPERSIZE:-a4}"
 DEFAULT_LOCALE="${DEFAULT_LOCALE:-}"
 DEFAULT_PAPERSIZE="${DEFAULT_PAPERSIZE:-}"
 GLOBAL_CURRENCYCODE="${GLOBAL_CURRENCYCODE:-}"
+AUTH_METHOD="${AUTH_METHOD:-}"
+AUTH_LDAP_SCHEMA_TYPE="${AUTH_LDAP_SCHEMA_TYPE:-}"
 AUTH_LDAP_ADMIN="${AUTH_LDAP_ADMIN:-}"
 AUTH_LDAP_PASSWORD="${AUTH_LDAP_PASSWORD:-}"
 AUTH_LDAP_SERVER="${AUTH_LDAP_SERVER:-}"
@@ -88,10 +89,6 @@ do
 done
 
 
-# set papersize
-echo "Overwrite default papersize"
-echo $DEFAULT_PAPERSIZE > /etc/papersize
-
 # update cups config Browsing off
 
 
@@ -100,7 +97,7 @@ server.properties_subst "@DB_NAME@" "${DB_NAME}"
 server.properties_subst "@DB_USER@" "${DB_USER}"
 server.properties_subst "@DB_PASSWORD@" "${DB_PASSWORD}"
 
-rm /opt/savapage/server/bin/linux-x64/app-server
+mv /opt/savapage/server/bin/linux-x64/app-server /opt/savapage/server/bin/linux-x64/app-server-daemon
 cp /template/app-server_interactive /opt/savapage/server/bin/linux-x64/app-server
 
 chown -R savapage /opt/savapage
@@ -110,36 +107,52 @@ chmod +x /opt/savapage/server/bin/linux-x64/app-server
 # initiate database
 sudo -u savapage /opt/savapage/server/bin/linux-x64/savapage-db --db-init
 
+
+echo start daemon for setting changes
+/opt/savapage/server/bin/linux-x64/app-server-daemon start
+sleep 8
 # overwrite settings defined in docker-compose
 
+until /opt/savapage/server/bin/linux-x64/savapage-cmd --get-config-property --name system.default-locale
+do
+  echo savapage service not ready yet
+  sleep 0.5
+done
+
 # local settings
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-locale --value de-DE
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-papersize --value iso-a4
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name financial.global.currency-code --value EUR
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-locale --value $DEFAULT_LOCALE
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-papersize --value $DEFAULT_PAPERSIZE
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name financial.global.currency-code --value $GLOBAL_CURRENCYCODE
 
 # ldap settings
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-dn --value cn=savapage-binduser,OU=Management,OU=GLOBAL,DC=schule,DC=lan
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-password --value Muster! 
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.host --value server
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.basedn --value DC=schule,DC=lan
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.port --value 389
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl --value Y
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.ssl.hostname-verification-disable --value Y
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl.trust-self-signed  --value Y
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.nested-group-search  --value Y
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.method --value $AUTH_METHOD
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.type --value $AUTH_LDAP_SCHEMA_TYPE
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.host --value $AUTH_LDAP_SERVER
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-dn --value $AUTH_LDAP_ADMIN
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-password --value $AUTH_LDAP_PASSWORD
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.basedn --value $AUTH_LDAP_BASEDN
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.port --value $AUTH_LDAP_PORT
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl --value $AUTH_LDAP_USESSL
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.ssl.hostname-verification-disable --value $AUTH_LDAP_SSL_HOSTNAME_VERIFICATION_DISABLE
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl.trust-self-signed  --value $AUTH_LDAP_TRUST_SELFSIGNED_CERT
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.nested-group-search  --value $AUTH_LDAP_USE_NESTED_GROUPS
 
 # mail settings
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.host --value smtphost
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.port --value 465
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.username --value savapage
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.password --value mailpassword
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.from.address --value savapage@mail.com
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.security --value ssl # or starttls
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.host --value $MAIL_SMTP_HOST
+#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.port --value $MAIL_SMTP_PORT
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.username --value $MAIL_SMTP_USERNAME
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.password --value $MAIL_SMTP_PASSWORD
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.from.address --value $MAIL_SMTP_MAILFROM_ADRESS
+#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.security --value $MAIL_SMTP_SECURITY
+
+echo stop daemon after setting changes
+/opt/savapage/server/bin/linux-x64/app-server-daemon stop
 
 #run cups in nondemand mode
 /usr/sbin/cupsd -f &
 #exec /usr/local/bin/tini -- /usr/sbin/cupsd -f
 
+echo "preparing container finished, starting savapage app-server"
 exec /usr/local/bin/tini -- /opt/savapage/server/bin/linux-x64/app-server start
 
 
