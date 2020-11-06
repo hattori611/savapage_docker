@@ -1,5 +1,5 @@
+version: "2.2"
 services:
-
   db:
     image: postgres
     restart: always
@@ -20,6 +20,7 @@ services:
     container_name: savapage
     ports:
       - "8632:8632/tcp"
+      - "631:631/tcp"
     environment:
       - "DB_NAME=db"
       - "DB_USER=savapage"
@@ -31,7 +32,7 @@ services:
       - "AUTH_LDAP_SCHEMA_TYPE=ACTIVE_DIRECTORY"
       - "AUTH_LDAP_ADMIN=cn=savapage-binduser,OU=Management,OU=GLOBAL,DC=schule,DC=lan"
       - "AUTH_LDAP_PASSWORD=Muster!"
-      - "AUTH_LDAP_SERVER=server"
+      - "AUTH_LDAP_SERVER=10.0.0.1"
       - "AUTH_LDAP_BASEDN=DC=schule,DC=lan"
       - "AUTH_LDAP_PORT=389"
       - "AUTH_LDAP_USESSL=N"
