@@ -56,6 +56,8 @@ COPY template/ /template/
 #COPY krb5.conf /etc/krb5.conf
 #COPY nsswitch.conf /etc/nsswitch.conf
 
+# copy /etc/cups for skeleton usage
+RUN cp -rp /etc/cups /etc/cups-skel
 
 # go trough static templates
 RUN rm /opt/savapage/server/admin.properties

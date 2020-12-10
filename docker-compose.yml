@@ -23,8 +23,7 @@ services:
       - savapage.env
     volumes:
       - './data/server:/opt/savapage/server/'
-      - './data/etc/cups/cupsd.conf:/etc/cups/cupsd.conf:rw'
-      - './data/etc/cups/cupsd.conf:/etc/cups/printers.conf:rw'
+      - './data/etc/cups/etc/cups/'
     mem_limit: "1g"
     restart: "always"
     depends_on:
