@@ -25,7 +25,7 @@ MAIL_SMTP_USERNAME="${MAIL_SMTP_USERNAME:-}"
 MAIL_SMTP_PASSWORD="${MAIL_SMTP_PASSWORD:-}"
 MAIL_SMTP_MAILFROM_ADRESS="${MAIL_SMTP_MAILFROM_ADRESS:-}"
 MAIL_SMTP_SECURITY="${MAIL_SMTP_SECURITY:-}"
-
+SAVAPAGE_USER_PW="${SAVAPAGE_USER_PW:-}"
 
 LDAP_RADIUS_ACCESS_GROUP="${LDAP_RADIUS_ACCESS_GROUP:-}"
 RADIUS_CLIENT_CREDENTIALS="${RADIUS_CLIENT_CREDENTIALS:-}"
@@ -91,7 +91,8 @@ done
 
 # update cups config Browsing off
 
-
+# set savapage posix password
+echo -e "$SAVAPAGE_USER_PW\nSAVAPAGE_USER_PW" | passwd savapage
 
 server.properties_subst "@DB_NAME@" "${DB_NAME}"
 server.properties_subst "@DB_USER@" "${DB_USER}"
@@ -178,111 +179,4 @@ echo "stop daemon after setting changes"
 
 echo "preparing container finished, starting savapage app-server"
 exec /usr/local/bin/tini -- /opt/savapage/server/bin/linux-x64/app-server start
-
-
-#exec /usr/local/bin/tini -- /bin/bash
-
-
-#ldap_subst "@LDAP_PASS@" "${LDAP_PASS}"
-#ldap_subst "@LDAP_BASEDN@" "${LDAP_BASEDN}"
-#ldap_subst "@LDAP_USER_BASEDN@" "${LDAP_USER_BASEDN}"
-#ldap_subst "@LDAP_GROUP_BASEDN@" "${LDAP_GROUP_BASEDN}"
-#ldap_subst "@LDAP_CLIENT_BASEDN@" "${LDAP_CLIENT_BASEDN}"
-#mschap_subst "@LDAP_DOMAIN_SHORT@" "${LDAP_DOMAIN_SHORT}"
-#krb5_subst "@LDAP_DOMAIN@" "${LDAP_DOMAIN}"
-#samba_subst "@LDAP_HOSTNAME@" "${LDAP_HOSTNAME}"
-#samba_subst "@LDAP_DOMAIN@" "${LDAP_DOMAIN}"
-#samba_subst "@LDAP_DOMAIN_SHORT@" "${LDAP_DOMAIN_SHORT}"
-
-## enable ldap
-#ln -s /etc/raddb/mods-available/ldap /etc/raddb/mods-enabled/ldap
-##ln -s /etc/raddb/mods-available/ntlm_auth /etc/raddb/mods-enabled/ntlm_auth
-#
-## write ntlm_auth module (seems to break --domain variable if done via subst )
-#echo "exec ntlm_auth {
-#        wait = yes
-#        program = \"/usr/bin/ntlm_auth --request-nt-key --domain=${LDAP_DOMAIN_SHORT}  --username=%{mschap:User-Name} --password=%{User-Password}\"
-#}" > /etc/raddb/mods-available/ntlm_auth
-#
-#
-## configure the default site for ldap
-#sed -i -e 's/-ldap/ldap/g' /etc/raddb/sites-available/default
-#sed -i -e '/^#[[:space:]]*Auth-Type LDAP {$/{N;N;s/#[[:space:]]*Auth-Type LDAP {\n#[[:space:]]*ldap\n#[[:space:]]*}/        Auth-Type LDAP {\n                ldap\n        }/}' /etc/raddb/sites-available/default
-#sed -i -e 's/^#[[:space:]]*ldap/        ldap/g' /etc/raddb/sites-available/default
-#
-## configure the inner-tunnel site for ldap
-#sed -i -e 's/-ldap/ldap/g' /etc/raddb/sites-available/inner-tunnel
-#sed -i -e '/^#[[:space:]]*Auth-Type LDAP {$/{N;N;s/#[[:space:]]*Auth-Type LDAP {\n#[[:space:]]*ldap\n#[[:space:]]*}/        Auth-Type LDAP {\n                ldap\n        }/}' /etc/raddb/sites-available/inner-tunnel
-#sed -i -e 's/^#[[:space:]]*ldap/        ldap/g' /etc/raddb/sites-available/inner-tunnel
-#
-#use_distro_provided_file() {
-#    # copy the distro-provided file to a new location if it
-#    # does not already exist
-#    [[ -f "${1}.dist" ]] || mv -f "${1}" "${1}.dist"
-#    # copy the distro-provided file to the original location
-#    cp -a "${1}.dist" "${1}"
-#}
-
-# Make sure we always start with the original distro-provided copies of
-# these files. On container restart, we will always repeat the same actions
-# on unmodified copies, allowing the process to be idempotent.
-#use_distro_provided_file /etc/raddb/sites-available/default
-#use_distro_provided_file /etc/raddb/clients.conf
-#
-## configure the LDAP group for access
-#if [[ -n "$LDAP_RADIUS_ACCESS_GROUP" ]]; then
-#    # create a temporary file with the access rules so that sed can read
-#    # it into the correct place in the /etc/raddb/sites-available/default file
-#    # WARNING: radiusd is INCREDIBLY picky about the format
-#    cat > /root/ldap-radius-access-group << EOF
-#        # only allow access to a specific LDAP group
-#        if (Ldap-Group == "${LDAP_RADIUS_ACCESS_GROUP}") {
-#            noop
-#        }
-#        else {
-#            reject
-#        }
-#
-#EOF
-#
-#    sed -i -e '/^post-auth {$/r /root/ldap-radius-access-group' /etc/raddb/sites-available/default
-#fi
-
-# setup clients
-#IFS=$',' read -ra RADIUS_CLIENT_CREDENTIALS_ARRAY <<< "$RADIUS_CLIENT_CREDENTIALS"
-#for i in "${RADIUS_CLIENT_CREDENTIALS_ARRAY[@]}"; do
-#    CLIENT="${i%%:*}"
-#    SECRET="${i#*:}"
-#    cat >> /etc/raddb/clients.conf << EOF
-#client $CLIENT {
-#    secret = $SECRET
-#    shortname = $CLIENT
-#    ipaddr = $CLIENT
-#    nas_type = other
-#}
-#EOF
-#done
-#
-##add freerad to winbindd
-#usermod -a -G winbindd_priv freerad
-## get sure winbind runs
-#/etc/init.d/winbind restart
-#
-## check AD membership
-#net ads testjoin -k
-#
-#if [ $? == 0 ]
-#then
-#  echo "Already domain joined"
-#else
-#  echo "joining domain"
-#  net ads join -U ${LDAP_DOMAIN_ADMIN}%${LDAP_DOMAIN_ADMIN_PW}
-#  /etc/init.d/winbind restart
-#  wbinfo -P
-#fi
-
-#exec /usr/local/bin/tini -- /usr/sbin/freeradius $RADIUSD_ARGS
-#exec /usr/local/bin/tini  -- /opt/savapage/server/bin/linux-x64/app-server
-
-
 

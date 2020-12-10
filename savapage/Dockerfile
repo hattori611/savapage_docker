@@ -18,6 +18,7 @@ RUN apt-get install curl sudo openjdk-8-jdk cups cups-bsd binutils cpio poppler-
 # install savapage
 RUN mkdir -p /opt/savapage
 RUN useradd  -r savapage -d /opt/savapage -s /bin/bash
+RUN usermod -a -G lpadmin savapage
 RUN curl https://www.savapage.org/download/snapshots/savapage-setup-1.3.0-rc-linux-x64.bin -o /opt/savapage/savapage-setup-1.3.0-rc-linux-x64.bin
 RUN chown -R savapage /opt/savapage
 RUN cd /opt/savapage && sudo -u savapage sh savapage-setup-1.3.0-rc-linux-x64.bin -i -n -v
@@ -28,7 +29,7 @@ RUN /opt/savapage/MUST-RUN-AS-ROOT
 #COPY raddb/ /etc/raddb/
 COPY bin/ /usr/local/bin/
 COPY template/ /template/
-COPY etc/ /etc/
+#COPY etc/ /etc/
 #COPY krb5.conf /etc/krb5.conf
 #COPY nsswitch.conf /etc/nsswitch.conf
 

@@ -8,6 +8,15 @@ Changelog
   # 2020.11.04
     - Initial
 
+
+Information
+==============
+
+Default Password is 'Muster!'
+
+This can be changed once the database is deployed.
+
+
 Environment Variables
 =====================
 

@@ -6,7 +6,7 @@ services:
     env_file:
       - db.env
     volumes:
-      - './db-data:/var/lib/postgresql/data/'
+      - './data/db-data:/var/lib/postgresql/data/'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U savapage"]
       interval: 5s
@@ -22,7 +22,9 @@ services:
     env_file:
       - savapage.env
     volumes:
-      - './server:/opt/savapage/server/'
+      - './data/server:/opt/savapage/server/'
+      - './data/etc/cups/cupsd.conf:/etc/cups/cupsd.conf:rw'
+      - './data/etc/cups/cupsd.conf:/etc/cups/printers.conf:rw'
     mem_limit: "1g"
     restart: "always"
     depends_on:
