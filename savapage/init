@@ -18,7 +18,6 @@ AUTH_LDAP_PORT="${AUTH_LDAP_PORT:-}"
 AUTH_LDAP_USESSL="${AUTH_LDAP_USESSL:-}"
 AUTH_LDAP_SSL_HOSTNAME_VERIFICATION_DISABLE="${AUTH_LDAP_SSL_HOSTNAME_VERIFICATION_DISABLE:-}"
 AUTH_LDAP_TRUST_SELFSIGNED_CERT="${AUTH_LDAP_TRUST_SELFSIGNED_CERT:-}"
-AUTH_LDAP_USE_NESTED_GROUPS="${AUTH_LDAP_USE_NESTED_GROUPS:-}"
 MAIL_SMTP_HOST="${MAIL_SMTP_HOST:-}"
 MAIL_SMTP_PORT="${MAIL_SMTP_PORT:-}"
 MAIL_SMTP_USERNAME="${MAIL_SMTP_USERNAME:-}"
@@ -97,7 +96,7 @@ fi
 
 
 # set savapage posix password
-echo -e "{$SAVAPAGE_USER_PW}\n{$SAVAPAGE_USER_PW}" | passwd savapage
+echo -e "$SAVAPAGE_USER_PW\n$SAVAPAGE_USER_PW" | passwd savapage
 
 server.properties_subst "@DB_NAME@" "${DB_NAME}"
 server.properties_subst "@DB_USER@" "${DB_USER}"
@@ -121,7 +120,7 @@ fi
 
 
 echo "start daemon for setting changes"
-/opt/savapage/server/bin/linux-x64/app-server-daemon start
+/opt/savapage/server/bin/linux-x64/app-server-daemon start &
 
 
 until /opt/savapage/server/bin/linux-x64/savapage-cmd --get-config-property --name system.default-locale
@@ -161,7 +160,7 @@ echo "set auth.ldap.ssl.hostname-verification-disable"
 echo "set auth.ldap.use-ssl.trust-self-signed "
 /opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl.trust-self-signed  --value $AUTH_LDAP_TRUST_SELFSIGNED_CERT
 echo "set ldap.schema.nested-group-search"
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.nested-group-search  --value $AUTH_LDAP_USE_NESTED_GROUPS
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.nested-group-search  --value (&(memberOf={0})(objectCategory=group))
 
 # mail settings
 echo "set mail.smtp.host"
@@ -174,6 +173,11 @@ echo "set mail.smtp.password "
 echo "set mail.from.address"
 /opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.from.address --value $MAIL_SMTP_MAILFROM_ADRESS
 #/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.security --value $MAIL_SMTP_SECURITY
+
+# webprint
+echo "set web-print.enable"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name web-print.enable --value Y
+
 
 echo "stop daemon after setting changes"
 /opt/savapage/server/bin/linux-x64/app-server-daemon stop

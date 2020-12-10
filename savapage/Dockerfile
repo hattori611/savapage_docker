@@ -49,12 +49,9 @@ RUN /opt/savapage/MUST-RUN-AS-ROOT
 
 
 # copy config files after installation
-#COPY raddb/ /etc/raddb/
 COPY bin/ /usr/local/bin/
 COPY template/ /template/
-#COPY etc/ /etc/
-#COPY krb5.conf /etc/krb5.conf
-#COPY nsswitch.conf /etc/nsswitch.conf
+COPY etc/ /etc/
 
 # copy /etc/cups for skeleton usage
 RUN cp -rp /etc/cups /etc/cups-skel
