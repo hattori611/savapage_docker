@@ -13,7 +13,30 @@ RUN apt-get update
 
 
 # Install requirements
-RUN apt-get install curl sudo openjdk-8-jdk cups cups-bsd binutils cpio poppler-utils qpdf imagemagick avahi-daemon avahi-discover libnss-mdns vim  python3-psycopg2 -y -o Dpkg::Options::="--force-confold" 
+RUN apt-get install -y -o Dpkg::Options::="--force-confold" \ 
+        curl \
+        sudo \
+        openjdk-8-jdk \
+        cups \
+        cups-bsd \
+        binutils \
+        cpio \
+        poppler-utils \
+        qpdf \
+        imagemagick \
+        avahi-daemon \
+        avahi-discover \
+        libnss-mdns \
+        vim \
+        python3-psycopg2 \ 
+        foomatic-db-compressed-ppds \
+        printer-driver-all \
+        openprinting-ppds \
+        hpijs-ppds \
+        hp-ppd \
+        hplip \
+        printer-driver-cups-pdf
+
 
 # install savapage
 RUN mkdir -p /opt/savapage
