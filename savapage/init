@@ -92,7 +92,7 @@ done
 # update cups config Browsing off
 
 # set savapage posix password
-echo -e "$SAVAPAGE_USER_PW\nSAVAPAGE_USER_PW" | passwd savapage
+echo -e "$SAVAPAGE_USER_PW\n$SAVAPAGE_USER_PW" | passwd savapage
 
 server.properties_subst "@DB_NAME@" "${DB_NAME}"
 server.properties_subst "@DB_USER@" "${DB_USER}"
