@@ -132,6 +132,46 @@ done
 
 # overwrite settings defined in docker-compose
 # local settings
+echo "set system.default-locale"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-locale --value $DEFAULT_LOCALE
+echo "set financial.global.currency-code"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name financial.global.currency-code --value $GLOBAL_CURRENCYCODE
+
+# ldap settings
+echo "set auth.method"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.method --value $AUTH_METHOD
+echo "set ldap.schema.type"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.type --value $AUTH_LDAP_SCHEMA_TYPE
+echo "set auth.ldap.host"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.host --value $AUTH_LDAP_SERVER
+echo "set auth.ldap.admin-dn"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-dn --value $AUTH_LDAP_ADMIN
+echo "set auth.ldap.admin-password"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-password --value $AUTH_LDAP_PASSWORD
+echo "set auth.ldap.basedn"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.basedn --value $AUTH_LDAP_BASEDN
+echo "set auth.ldap.port"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.port --value $AUTH_LDAP_PORT
+echo "set auth.ldap.use-ssl "
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl --value $AUTH_LDAP_USESSL
+echo "set auth.ldap.ssl.hostname-verification-disable"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.ssl.hostname-verification-disable --value $AUTH_LDAP_SSL_HOSTNAME_VERIFICATION_DISABLE
+echo "set auth.ldap.use-ssl.trust-self-signed "
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl.trust-self-signed  --value $AUTH_LDAP_TRUST_SELFSIGNED_CERT
+#echo "set ldap.schema.nested-group-search"
+#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.nested-group-search  --value '(&(memberOf={0})(objectCategory=group))'
+
+# mail settings
+echo "set mail.smtp.host"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.host --value $MAIL_SMTP_HOST
+#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.port --value $MAIL_SMTP_PORT
+echo "set mail.smtp.username "
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.username --value $MAIL_SMTP_USERNAME
+echo "set mail.smtp.password "
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.password --value $MAIL_SMTP_PASSWORD
+echo "set mail.from.address"
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.from.address --value $MAIL_SMTP_MAILFROM_ADRESS
+#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.security --value $MAIL_SMTP_SECURITY
 
 echo "sync users and groups"
 /opt/savapage/server/bin/linux-x64/savapage-cmd --sync-users-and-groups
@@ -146,80 +186,6 @@ psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$DEFAULT_PAP
 
 #/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-papersize --value $DEFAULT_PAPERSIZE
 #system.default-papersize
-
-echo "set system.default-locale"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-locale --value $DEFAULT_LOCALE
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$DEFAULT_LOCALE'  WHERE property_name = 'system.default-locale';"
-
-echo "set financial.global.currency-code"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name financial.global.currency-code --value $GLOBAL_CURRENCYCODE
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$GLOBAL_CURRENCYCODE'  WHERE property_name = 'financial.global.currency-code';"
-
-# ldap settings
-echo "set auth.method"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.method --value $AUTH_METHOD
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_METHOD  WHERE property_name = 'auth.method';"
-
-echo "set ldap.schema.type"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.type --value $AUTH_LDAP_SCHEMA_TYPE
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_LDAP_SCHEMA_TYPE'  WHERE property_name = 'ldap.schema.type';"
-
-echo "set auth.ldap.host"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.host --value $AUTH_LDAP_SERVER
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_LDAP_SERVER'  WHERE property_name = 'auth.ldap.host';"
-
-echo "set auth.ldap.admin-dn"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-dn --value $AUTH_LDAP_ADMIN
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_LDAP_ADMIN'  WHERE property_name = 'auth.ldap.admin-dn';"
-
-echo "set auth.ldap.admin-password"
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-password --value $AUTH_LDAP_PASSWORD
-
-echo "set auth.ldap.basedn"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.basedn --value $AUTH_LDAP_BASEDN
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_LDAP_BASEDN'  WHERE property_name = 'auth.ldap.basedn';"
-
-echo "set auth.ldap.port"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.port --value $AUTH_LDAP_PORT
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_LDAP_PORT'  WHERE property_name = 'auth.ldap.port';"
-
-echo "set auth.ldap.use-ssl "
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl --value $AUTH_LDAP_USESSL
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_LDAP_USESSL'  WHERE property_name = 'auth.ldap.use-ssl';"
-
-echo "set auth.ldap.ssl.hostname-verification-disable"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.ssl.hostname-verification-disable --value $AUTH_LDAP_SSL_HOSTNAME_VERIFICATION_DISABLE
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_LDAP_SSL_HOSTNAME_VERIFICATION_DISABLE'  WHERE property_name = 'auth.ldap.ssl.hostname-verification-disable';"
-
-echo "set auth.ldap.use-ssl.trust-self-signed "
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.use-ssl.trust-self-signed  --value $AUTH_LDAP_TRUST_SELFSIGNED_CERT
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$AUTH_LDAP_TRUST_SELFSIGNED_CERT'  WHERE property_name = 'auth.ldap.use-ssl.trust-self-signed';"
-
-#echo "set ldap.schema.nested-group-search"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name ldap.schema.nested-group-search  --value '(&(memberOf={0})(objectCategory=group))'
-
-# mail settings
-echo "set mail.smtp.host"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.host --value $MAIL_SMTP_HOST
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$MAIL_SMTP_HOST'  WHERE property_name = 'mail.smtp.host';"
-
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.port --value $MAIL_SMTP_PORT
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$MAIL_SMTP_PORT'  WHERE property_name = 'mail.smtp.port';"
-
-echo "set mail.smtp.username "
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.username --value $MAIL_SMTP_USERNAME
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$MAIL_SMTP_USERNAME'  WHERE property_name = 'mail.smtp.username';"
-
-echo "set mail.from.address"
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.from.address --value $MAIL_SMTP_MAILFROM_ADRESS
-psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$MAIL_SMTP_MAILFROM_ADRESS'  WHERE property_name = 'mail.from.address';"
-
-echo "set mail.smtp.password "
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.password --value $MAIL_SMTP_PASSWORD
-
-#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name mail.smtp.security --value $MAIL_SMTP_SECURITY
-
-
 
 echo "stop daemon after setting changes"
 /opt/savapage/server/bin/linux-x64/app-server-daemon stop
