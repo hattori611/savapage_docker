@@ -27,7 +27,7 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
         avahi-daemon \
         avahi-discover \
         libnss-mdns \
-        vim \
+        #vim \
         postgresql-client \
         python3-psycopg2 \ 
         foomatic-db-compressed-ppds \
@@ -89,10 +89,8 @@ RUN printf "#!/bin/bash \
 
 #\nsavapage/savapage-core \
 
-
 #RUN git clone https://github.com/PLanB2008/savapage-server.git ~/savapage/repos/savapage-server
 RUN git clone https://github.com/PLanB2008/savapage-core.git ~/savapage/repos/savapage-core
-
 
 
 RUN chmod +x ~/savapage/repos/init.sh
@@ -112,6 +110,21 @@ RUN mv /root/savapage/repos/savapage-make/target/savapage-setup-1.3.0-rc-linux-x
 RUN cd /opt/savapage && sudo -u savapage sh savapage-setup-1.3.0-rc-linux-x64.bin -i -n -v
 RUN /opt/savapage/MUST-RUN-AS-ROOT
 
+
+# clean Up
+
+RUN rm -Rf ~/savapage
+RUN apt-get purge -y -o Dpkg::Options::="--force-confold" \ 
+                maven \
+                g++ \
+                make \
+                pkg-config \
+                zip \
+                pgpgpg \
+                libpcsclite-dev \
+                libcups2-dev \
+                libpam0g-dev \
+                git
 
 # copy config files after installation
 COPY bin/ /usr/local/bin/
