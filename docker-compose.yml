@@ -24,6 +24,7 @@ services:
     volumes:
       - './data/server:/opt/savapage/server/'
       - './data/etc/cups:/etc/cups/'
+      - './data/usr/lib/cups:/usr/lib/cups/'
     mem_limit: "1g"
     restart: "always"
     depends_on:
