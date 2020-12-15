@@ -134,8 +134,6 @@ done
 # local settings
 echo "set system.default-locale"
 /opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-locale --value $DEFAULT_LOCALE
-echo "set financial.global.currency-code"
-/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name financial.global.currency-code --value $GLOBAL_CURRENCYCODE
 
 # ldap settings
 echo "set auth.method"
@@ -183,11 +181,20 @@ export PGPASSWORD=$DB_PASSWORD
 psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = 'Y'  WHERE property_name = 'web-print.enable';"
 echo "set system.default-papersize"
 psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$DEFAULT_PAPERSIZE'  WHERE property_name = 'system.default-papersize';"
+echo "set financial.global.currency-code"
+#/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name financial.global.currency-code --value $GLOBAL_CURRENCYCODE
+psql -h db -U savapage  -c "UPDATE tbl_config SET property_value = '$GLOBAL_CURRENCYCODE'  WHERE property_name = 'financial.global.currency-code';"
+
 
 #/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name system.default-papersize --value $DEFAULT_PAPERSIZE
 #system.default-papersize
 
 echo "stop daemon after setting changes"
+until /opt/savapage/server/bin/linux-x64/savapage-cmd --get-config-property --name system.default-locale
+do
+  echo "savapage service not ready yet"
+  sleep 1
+done
 /opt/savapage/server/bin/linux-x64/app-server-daemon stop
 
 #run cups in nondemand mode
