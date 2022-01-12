@@ -1,0 +1,14 @@
+[Unit]
+Description=Netzint Savapage Docker
+Requires=docker.service
+After=docker.service
+ 
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/docker/savapage_docker
+ExecStart=/srv/docker/savapage_docker/daemonHandler.sh start
+ExecStop=/srv/docker/savapage_docker/daemonHandler.sh stop
+RemainAfterExit=yes
+ 
+[Install]
+WantedBy=multi-user.target

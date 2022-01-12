@@ -110,7 +110,9 @@ docker-compose up
 docker-compose down
 docker-compose rm
 ```
-7. Now start the system requlary
+7. Copy `savapage.service` to systemd and enable and start the docker
 ```
-./daemonHandler.sh start
+cp templates/savapage.service /etc/systemd/system/savapage.service
+systemctl enable savapage
+systemctl start savapage
 ```
