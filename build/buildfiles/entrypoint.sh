@@ -25,6 +25,8 @@ MAIL_SMTP_PASSWORD="${MAIL_SMTP_PASSWORD:-}"
 MAIL_SMTP_MAILFROM_ADRESS="${MAIL_SMTP_MAILFROM_ADRESS:-}"
 MAIL_SMTP_SECURITY="${MAIL_SMTP_SECURITY:-}"
 SAVAPAGE_USER_PW="${SAVAPAGE_USER_PW:-}"
+SAVAPAGE_URL="${SAVAPAGE_URL:-}"
+SAVAPAGE_UUID="${SAVAPAGE_UUID:-}"
 
 LDAP_RADIUS_ACCESS_GROUP="${LDAP_RADIUS_ACCESS_GROUP:-}"
 RADIUS_CLIENT_CREDENTIALS="${RADIUS_CLIENT_CREDENTIALS:-}"
@@ -96,6 +98,16 @@ if [ ! -d /usr/lib/cups/filter ]; then
 	  cp -rpn /usr/lib/cups-skel/* /usr/lib/cups/
 fi
 
+# Save encryption file
+echo "save encryption file to server directory"
+if [ ! -f /opt/savapage/server/$file ]; then
+    echo "encryption file does not exist! copy to directory"
+    mv /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
+fi
+
+rm /opt/savapage/serverBuiltin/data/encryption.properties
+ln -s /opt/savapage/server/data/encryption.properties /opt/savapage/serverBuiltin/data/encryption.properties
+
 # set savapage posix password
 echo -e "$SAVAPAGE_USER_PW\n$SAVAPAGE_USER_PW" | passwd savapage
 
@@ -129,6 +141,8 @@ do
   echo "savapage service not ready yet"
   sleep 1
 done
+
+echo "savapage service is ready now"
 
 # overwrite settings defined in docker-compose
 # local settings
@@ -197,10 +211,34 @@ do
 done
 /opt/savapage/server/bin/linux-x64/app-server-daemon stop
 
+# # Save encryption file
+# echo "save encryption file to server directory"
+# if [ ! -f /opt/savapage/server/$file ]; then
+#     echo "encryption file does not exist! copy to directory"
+#     mv /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
+# fi
+
+# rm /opt/savapage/serverBuiltin/data/encryption.properties
+# ln -s /opt/savapage/server/data/encryption.properties /opt/savapage/serverBuiltin/data/encryption.properties
+
+sed -i "s/#SAVAPAGE_UUID#/$SAVAPAGE_UUID/g" /etc/avahi/services/savapage.service
+sed -i "s/#SAVAPAGE_HOSTNAME#/$SAVAPAGE_HOSTNAME/g" /etc/avahi/services/savapage.service
+
 #run cups in nondemand mode
 /usr/sbin/cupsd -f &
 #exec /usr/local/bin/tini -- /usr/sbin/cupsd -f
 
+# start dbus and avahi
+service dbus start
+service avahi-daemon start
+
+cat <<EOF > /tmp/syncAfterStart.sh
+#!/bin/bash
+sleep 10
+/opt/savapage/server/bin/linux-x64/savapage-cmd --set-config-property --name auth.ldap.admin-password --value $AUTH_LDAP_PASSWORD
+EOF
+
+bash /tmp/syncAfterStart.sh &
+
 echo "preparing container finished, starting savapage app-server"
 exec /usr/local/bin/tini -- /opt/savapage/server/bin/linux-x64/app-server start
-

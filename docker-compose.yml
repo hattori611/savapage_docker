@@ -3,8 +3,12 @@ services:
   db:
     image: postgres
     restart: always
-    env_file:
-      - db.env
+    environment:
+      - POSTGRES_USER=savapage
+      - POSTGRES_PASSWORD=MusterSavapage
+      - POSTGRES_DB=savapage
+    networks:
+      internal:
     volumes:
       - './data/db-data:/var/lib/postgresql/data/'
     healthcheck:
@@ -14,19 +18,38 @@ services:
       retries: 5
 
   savapage:
-    build: ./savapage
-    container_name: savapage
-    ports:
-      - "8632:8632/tcp"
-      - "631:631/tcp"
+    image: netzint/savapage
+    restart: always
+    # ports:
+    #   - "8632:8632/tcp"
+    #   - "8631:8631/tcp"
+    #   - "631:631/tcp"
+    #   - "9100:9100/tcp"
+    #   - "5353:5353/udp"
     env_file:
       - savapage.env
+    networks:
+      physical:
+        ipv4_address: 10.10.1.48
+      internal:
+    #mac_address:
+    hostname: print01
+    domainname: linuxmuster.lan
     volumes:
       - './data/server:/opt/savapage/server/'
       - './data/etc/cups:/etc/cups/'
       - './data/usr/lib/cups:/usr/lib/cups/'
-    mem_limit: "1g"
-    restart: "always"
     depends_on:
       db:
         condition: service_healthy
+
+networks:
+  internal:
+  physical:
+    driver: macvlan
+    driver_opts:
+      parent: ens19
+    ipam:
+      config:
+        - subnet: 10.10.1.0/24
+          gateway: 10.10.1.254

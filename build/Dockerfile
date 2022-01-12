@@ -1,8 +1,5 @@
 FROM ubuntu:focal
-LABEL Developer "Andreas Till <andreas.till@netzint.de>"
 LABEL Maintainer "Lukas Spitznagel <lukas.spitznagel@netzint.de>"
-
-ENTRYPOINT [ "/entrypoint.sh" ]
 
 ENV TZ=Europe/Berlin
 ENV DEBIAN_FRONTEND noninteractive
@@ -42,38 +39,37 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
     hplip \
     printer-driver-cups-pdf
 
-RUN mkdir -p /root/savapage/repos
-COPY init.sh /root/savapage/repos/init.sh
-RUN cd /root/savapage/repos && sh ./init.sh
-COPY savapage_core_pom.xml /root/savapage/repos/savapage-core/pom.xml
-RUN rm /root/savapage/repos/init.sh
-RUN cd /root/savapage/repos/savapage-make && ./dev-git-all.sh "checkout develop"
-RUN cd /root/savapage/repos/savapage-make && ./build.sh all-x64
+RUN mkdir -p /opt/build/savapage/repos
+
+COPY buildfiles/init.sh /opt/build/savapage/repos/init.sh
+RUN cd /opt/build/savapage/repos && ./init.sh
+RUN rm /opt/build/savapage/repos/init.sh
+
+RUN cd /opt/build/savapage/repos/savapage-make && \
+    git checkout master && \
+    ./dev-git-all.sh "checkout master"
+
+RUN cd /opt/build/savapage && \
+    ./repos/savapage-make/dev-init.sh
+
+COPY buildfiles/savapage_core_pom.xml /opt/build/savapage/repos/savapage-core/pom.xml
+
+RUN cd /opt/build/savapage/repos/savapage-make && \
+    ./build.sh all-x64
 
 RUN mkdir -p /opt/savapage
 RUN useradd  -r savapage -d /opt/savapage -s /bin/bash
 RUN usermod -a -G lpadmin savapage
 RUN chown -R savapage /opt/savapage
-RUN mv $(ls /root/savapage/repos/savapage-make/target/*.bin) /opt/savapage/savapage-setup.bin
+RUN mv $(ls /opt/build/savapage/repos/savapage-make/target/*.bin) /opt/savapage/savapage-setup.bin
 RUN cd /opt/savapage && sudo -u savapage sh savapage-setup.bin -i -n -v
 RUN /opt/savapage/MUST-RUN-AS-ROOT
 
-RUN rm -Rf /root/savapage
-RUN apt-get purge -y -o Dpkg::Options::="--force-confold" \ 
-    maven \
-    g++ \
-    make \
-    pkg-config \
-    zip \
-    pgpgpg \
-    libpcsclite-dev \
-    libcups2-dev \
-    libpam0g-dev \
-    git
+RUN rm -Rf /opt/build
 
-COPY bin/ /usr/local/bin/
-COPY template/ /template/
-COPY etc/ /etc/
+COPY buildfiles/bin/ /usr/local/bin/
+COPY buildfiles/template/ /template/
+COPY buildfiles/etc/ /etc/
 
 RUN cp -rp /etc/cups /etc/cups-skel
 RUN cp -rp /usr/lib/cups /usr/lib/cups-skel
@@ -87,4 +83,6 @@ RUN cp /template/server.properties /opt/savapage/server/server.properties
 RUN mv /opt/savapage/server /opt/savapage/serverBuiltin
 RUN mkdir /opt/savapage/server
 
-COPY entrypoint.sh /entrypoint.sh
+COPY buildfiles/entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT [ "/entrypoint.sh" ]

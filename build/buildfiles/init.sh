@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 _REPOS_GIT_PUBLIC="savapage/savapage-client
      savapage/savapage-common
      savapage/savapage-core
@@ -28,5 +28,5 @@ do
      git clone https://gitlab.com/${repo}.git
 done
 
-sed -i 's/VISITOR_PERIOD_DAYS = 40/VISITOR_PERIOD_DAYS = 40000/g' ~/savapage/repos/savapage-core/src/main/java/org/savapage/core/community/MemberCard.java
-sed -i 's/return 5;/return 50000;/g' ~/savapage/repos/savapage-core/src/main/java/org/savapage/core/community/MemberCard.java
+sed -i 's/VISITOR_PERIOD_DAYS = 40/VISITOR_PERIOD_DAYS = 40000/g' /opt/build/savapage/repos/savapage-core/src/main/java/org/savapage/core/community/MemberCard.java
+sed -i 's/return 5;/return 50000;/g' /opt/build/savapage/repos/savapage-core/src/main/java/org/savapage/core/community/MemberCard.java
