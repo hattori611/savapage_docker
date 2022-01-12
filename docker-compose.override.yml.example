@@ -1,0 +1,18 @@
+version: "3.0"
+services:
+    networks:
+      physical:
+        ipv4_address: 1.2.3.4
+      internal:
+    hostname: print01
+    domainname: linuxmuster.lan
+
+networks:
+  physical:
+    driver: macvlan
+    driver_opts:
+      parent: ens19
+    ipam:
+      config:
+        - subnet: 1.2.3.0/24
+          gateway: 1.2.3.254

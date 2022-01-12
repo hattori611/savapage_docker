@@ -23,11 +23,7 @@ services:
     env_file:
       - savapage.env
     networks:
-      physical:
-        ipv4_address: 10.10.1.48
       internal:
-    hostname: print01
-    domainname: linuxmuster.lan
     volumes:
       - './data/server:/opt/savapage/server/'
       - './data/etc/cups:/etc/cups/'
@@ -38,11 +34,3 @@ services:
 
 networks:
   internal:
-  physical:
-    driver: macvlan
-    driver_opts:
-      parent: ens19
-    ipam:
-      config:
-        - subnet: 10.10.1.0/24
-          gateway: 10.10.1.254
