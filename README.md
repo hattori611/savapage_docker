@@ -28,58 +28,6 @@ The following environment variables yout can change and edit for your requiremen
 * `SAVAPAGE_USER_PW` - savapage admin user
 * `SAVAPAGE_HOSTNAME` - savapage ip address, required for airprint!
 
-## Example docker-compose.yml
-```
-version: "3.0"
-services:
-  db:
-    image: postgres
-    restart: always
-    environment:
-      - POSTGRES_USER=savapage
-      - POSTGRES_PASSWORD=MusterSavapage
-      - POSTGRES_DB=savapage
-    networks:
-      internal:
-    volumes:
-      - './data/db-data:/var/lib/postgresql/data/'
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U savapage"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  savapage:
-    image: netzint/savapage:latest
-    restart: always
-    env_file:
-      - savapage.env
-    networks:
-      physical:
-        ipv4_address: <IP-ADDRESS>
-      internal:
-    hostname: print01
-    domainname: linuxmuster.lan
-    volumes:
-      - './data/server:/opt/savapage/server/'
-      - './data/etc/cups:/etc/cups/'
-      - './data/usr/lib/cups:/usr/lib/cups/'
-    depends_on:
-      db:
-        condition: service_healthy
-
-networks:
-  internal:
-  physical:
-    driver: macvlan
-    driver_opts:
-      parent: ens19
-    ipam:
-      config:
-        - subnet: <IP-SUBNET>
-          gateway: <IP-GATEWAY>
-```
-
 ## Install
 
 1. Clone repository to your docker host
