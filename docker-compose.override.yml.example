@@ -1,5 +1,6 @@
 version: "3.0"
 services:
+  savapage:
     networks:
       physical:
         ipv4_address: 1.2.3.4
@@ -15,4 +16,3 @@ networks:
     ipam:
       config:
         - subnet: 1.2.3.0/24
-          gateway: 1.2.3.254

@@ -29,8 +29,7 @@ services:
       - './data/etc/cups:/etc/cups/'
       - './data/usr/lib/cups:/usr/lib/cups/'
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
 networks:
   internal:
