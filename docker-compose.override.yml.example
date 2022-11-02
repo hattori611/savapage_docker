@@ -1,5 +1,12 @@
 version: "3.0"
 services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=savapage
+      - POSTGRES_PASSWORD=MusterSavapage
+      - POSTGRES_DB=savapage
   savapage:
     networks:
       physical:
