@@ -61,6 +61,7 @@ RUN mkdir -p /opt/savapage
 RUN useradd  -r savapage -d /opt/savapage -s /bin/bash
 RUN usermod -a -G lpadmin savapage
 RUN chown -R savapage /opt/savapage
+RUN ls /opt/build/savapage/repos/savapage-make/target/*
 RUN mv $(ls /opt/build/savapage/repos/savapage-make/target/*.bin) /opt/savapage/savapage-setup.bin
 RUN cd /opt/savapage && sudo -u savapage sh savapage-setup.bin -i -n -v
 RUN /opt/savapage/MUST-RUN-AS-ROOT
