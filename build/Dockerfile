@@ -58,11 +58,13 @@ RUN cd /opt/build/savapage/repos/savapage-make && \
     ./build.sh all-x64
 
 RUN mkdir -p /opt/savapage
-RUN useradd  -r savapage -d /opt/savapage -s /bin/bash
-RUN usermod -a -G lpadmin savapage
-RUN chown -R savapage /opt/savapage
-RUN ls /opt/build/savapage/repos/savapage-make/target/*
 RUN mv $(ls /opt/build/savapage/repos/savapage-make/target/*.bin) /opt/savapage/savapage-setup.bin
+
+############################################
+#
+# Running stage
+#
+############################################
 
 FROM ubuntu:focal
 
@@ -85,7 +87,12 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
     libnss-mdns \
     sudo
 
-RUN mkdir /opt/savapage/
+RUN mkdir -p /opt/savapage
+RUN chown -R savapage /opt/savapage
+
+RUN useradd  -r savapage -d /opt/savapage -s /bin/bash
+RUN usermod -a -G lpadmin savapage
+
 COPY --from=build /opt/savapage/savapage-setup.bin /opt/savapage/savapage-setup.bin
 
 RUN cd /opt/savapage && sudo -u savapage sh savapage-setup.bin -i -n -v
