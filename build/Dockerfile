@@ -82,7 +82,8 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
     imagemagick \
     avahi-daemon \
     avahi-discover \
-    libnss-mdns
+    libnss-mdns \
+    sudo
 
 RUN mkdir /opt/savapage/
 COPY --from=build /opt/savapage/savapage-setup.bin /opt/savapage/savapage-setup.bin
