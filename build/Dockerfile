@@ -85,6 +85,7 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
     avahi-daemon \
     avahi-discover \
     libnss-mdns \
+    binutils \
     sudo
 
 
