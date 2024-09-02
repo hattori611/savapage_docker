@@ -241,4 +241,4 @@ EOF
 bash /tmp/syncAfterStart.sh &
 
 echo "preparing container finished, starting savapage app-server"
-exec /usr/local/bin/tini -- /opt/savapage/server/bin/linux-x64/app-server-daemon start
+exec /usr/local/bin/tini -- /opt/savapage/server/bin/linux-x64/app-server start

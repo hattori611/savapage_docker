@@ -87,6 +87,7 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
     libnss-mdns \
     binutils \
     sudo \
+    postgresql-client \
     cpio
 
 

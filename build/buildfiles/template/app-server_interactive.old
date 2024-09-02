@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 # This file is part of the SavaPage project <https://www.savapage.org>.
-# Copyright (c) 2024 Datraverse B.V.
+# Copyright (c) 2011-2020 Datraverse B.V.
 # Author: Rijk Ravestein.
 #
-# SPDX-FileCopyrightText: (c) 2024 Datraverse B.V. <info@datraverse.com>
+# SPDX-FileCopyrightText: 2011-2020 Datraverse B.V. <info@datraverse.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
 # This program is free software: you can redistribute it and/or modify
@@ -52,12 +52,14 @@ while [ -h $SELF_PATH ]; do
     # 4) append the basename
     DIR=$(dirname -- "$SELF_PATH")
     SYM=$(readlink $SELF_PATH)
+    SYM=$DIR
     SELF_PATH=$(cd $DIR && cd $(dirname -- "$SYM") && pwd)/$(basename -- "$SYM")
 done
 #--------------------------------------------------------------------
 currentdir=`dirname ${SELF_PATH}`
 
 . $currentdir/.server-common.inc.sh
+. $currentdir/.java-version.inc.bsh
 . $currentdir/.app-version.inc.sh
 
 appServerCustomFile=$SERVER_HOME/custom/app-server.conf
@@ -82,15 +84,13 @@ else
 fi
 
 # GC log parameters for Java 8 and 9+.
-readonly _java_version=`bash $currentdir/../../../.java-version.inc.bsh`
-
+readonly _java_version=$(_get_java_version)
 if [ ${_java_version} -gt "8" ]; then
   JVM_X_ARGS="-Xlog:gc*:file="$SERVER_HOME"/logs/gc.log:tags,uptime,time:filecount=5,filesize=1024"
 else
   JVM_X_ARGS="-XX:+PrintGCDetails -XX:+PrintGCApplicationConcurrentTime -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=1M -Xloggc:"$SERVER_HOME"/logs/gc.log"
 fi
 
-# Mantis 1058
 if [ ${_java_version} -gt "10" ]; then
   JVM_X_ARGS="${JVM_X_ARGS} --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED"
 fi
@@ -115,15 +115,7 @@ javaArgs="$DAEMON_ARGS"                                    # arguments for Java 
 
 javaCommandLine="$javaCommand $javaArgs"                   # command line to start the Java service application
 javaCommandLineKeyword="org.savapage.server.WebServer"     # a keyword that occurs on the commandline, used to detect an already running service process and to distinguish it from others
-
-# Clear server/tmp.
-function clearServerTmp {
-   # remove all files
-   find "${SERVER_HOME}/tmp" -mindepth 1 -maxdepth 1 -type f -exec rm {} \;
-   # remove all directories
-   find "${SERVER_HOME}/tmp" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
-   return 0; }
-
+ 
 # Makes the file $1 writable by the group $serviceGroup.
 function makeFileWritable {
    local filename="$1"
@@ -158,27 +150,24 @@ function getServicePID {
 function startServiceProcess {
    cd $applDir || return 1
    cmd="umask 077;CLASSPATH=$CLASSPATH nohup $javaCommandLine"
-   su -m $serviceUser -s $SHELL -c "$cmd" || return 1
-
-#    cd $applDir || return 1
-#    rm -f $pidFile
-#    clearServerTmp || return 1
-#    makeFileWritable $pidFile || return 1
-#    makeFileWritable $serviceLogFile || return 1
-#    cmd="umask 077;CLASSPATH=$CLASSPATH nohup $javaCommandLine >>$serviceLogFile 2>&1 & echo \$! >$pidFile"  
-#    if [ `whoami` = $serviceUser ]; then
-#        $SHELL -c "$cmd" || return 1
-#    else
-#        su -m $serviceUser -s $SHELL -c "$cmd" || return 1
-#    fi
-#    sleep 0.1
-#    pid="$(<$pidFile)"
-#    if checkProcessIsRunning $pid; then :; else
-#       echo -ne "\n$serviceNameFull start failed, see logfile."
-#       return 1
-#    fi
-#    return 0; }
-}
+   su -m $serviceUser -s $SHELL -c "$cmd"
+   #rm -f $pidFile
+   #makeFileWritable $pidFile || return 1
+   #makeFileWritable $serviceLogFile || return 1
+   #cmd="umask 077;CLASSPATH=$CLASSPATH nohup $javaCommandLine >>$serviceLogFile 2>&1 & echo \$! >$pidFile"  
+   #if [ `whoami` = $serviceUser ]; then
+   #    $SHELL -c "$cmd" || return 1
+   #else
+   #    su -m $serviceUser -s $SHELL -c "$cmd" || return 1
+   #fi
+   #sleep 0.1
+   #pid="$(<$pidFile)"
+   #if checkProcessIsRunning $pid; then :; else
+   #   echo -ne "\n$serviceNameFull start failed, see logfile."
+   #   return 1
+   #fi
+   #return 0; }
+   }
  
 function stopServiceProcess {
    kill $pid || return 1
