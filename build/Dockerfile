@@ -47,7 +47,7 @@ RUN rm /opt/build/savapage/repos/init.sh
 
 RUN cd /opt/build/savapage/repos/savapage-make && \
     git checkout master && \
-    ./dev-git-all.sh "checkout master"
+    ./dev-git-all.sh "checkout develop"
 
 RUN cd /opt/build/savapage && \
     ./repos/savapage-make/dev-init.sh
