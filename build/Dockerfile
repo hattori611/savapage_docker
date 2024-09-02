@@ -86,7 +86,8 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
     avahi-discover \
     libnss-mdns \
     binutils \
-    sudo
+    sudo \
+    cpio
 
 
 RUN useradd  -r savapage -d /opt/savapage -s /bin/bash
