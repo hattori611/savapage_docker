@@ -100,9 +100,11 @@ fi
 
 # Save encryption file
 echo "save encryption file to server directory"
-if [ ! -f /opt/savapage/server/$file ]; then
+if [ ! -f /opt/savapage/server/data/encryption.properties ]; then
     echo "encryption file does not exist! copy to directory"
     mv /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
+else
+    echo "encryption file already exist!"
 fi
 
 rm /opt/savapage/serverBuiltin/data/encryption.properties
@@ -120,6 +122,7 @@ cp /template/app-server_interactive /opt/savapage/server/bin/linux-x64/app-serve
 
 chown -R savapage /opt/savapage
 chmod +x /opt/savapage/server/bin/linux-x64/app-server
+chmod +x /opt/savapage/server/bin/linux-x64/app-server-daemon
 
 
 echo "check database"
