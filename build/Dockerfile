@@ -87,11 +87,12 @@ RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
     libnss-mdns \
     sudo
 
-RUN mkdir -p /opt/savapage
-RUN chown -R savapage /opt/savapage
 
 RUN useradd  -r savapage -d /opt/savapage -s /bin/bash
 RUN usermod -a -G lpadmin savapage
+
+RUN mkdir -p /opt/savapage
+RUN chown -R savapage /opt/savapage
 
 COPY --from=build /opt/savapage/savapage-setup.bin /opt/savapage/savapage-setup.bin
 
