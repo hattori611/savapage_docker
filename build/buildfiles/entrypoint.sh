@@ -108,7 +108,7 @@ else
 fi
 
 rm /opt/savapage/serverBuiltin/data/encryption.properties
-ln -s /opt/savapage/server/data/encryption.properties /opt/savapage/serverBuiltin/data/encryption.properties
+ln -s /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
 
 # set savapage posix password
 echo -e "$SAVAPAGE_USER_PW\n$SAVAPAGE_USER_PW" | passwd savapage
