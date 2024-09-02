@@ -66,6 +66,10 @@ RUN mv $(ls /opt/build/savapage/repos/savapage-make/target/*.bin) /opt/savapage/
 
 FROM ubuntu:focal
 
+ENV TZ=Europe/Berlin
+ENV DEBIAN_FRONTEND noninteractive
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN apt-get update
 RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
     default-jdk \
