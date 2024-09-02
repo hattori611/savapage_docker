@@ -66,6 +66,20 @@ RUN mv $(ls /opt/build/savapage/repos/savapage-make/target/*.bin) /opt/savapage/
 
 FROM ubuntu:focal
 
+RUN apt-get update
+RUN apt-get install -y -o Dpkg::Options::="--force-confold" \
+    default-jdk \
+    cups \
+    cups-bsd \
+    poppler-utils \
+    qpdf \
+    wkhtmltopdf \
+    librsvg2-bin \
+    imagemagick \
+    avahi-daemon \
+    avahi-discover \
+    libnss-mdns
+
 RUN mkdir /opt/savapage/
 COPY --from=build /opt/savapage/savapage-setup.bin /opt/savapage/savapage-setup.bin
 
