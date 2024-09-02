@@ -52,7 +52,7 @@ RUN cd /opt/build/savapage/repos/savapage-make && \
 RUN cd /opt/build/savapage && \
     ./repos/savapage-make/dev-init.sh
 
-COPY buildfiles/savapage_core_pom.xml /opt/build/savapage/repos/savapage-core/pom.xml
+#COPY buildfiles/savapage_core_pom.xml /opt/build/savapage/repos/savapage-core/pom.xml
 
 RUN cd /opt/build/savapage/repos/savapage-make && \
     ./build.sh all-x64
