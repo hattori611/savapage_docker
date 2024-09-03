@@ -1,4 +1,5 @@
 FROM ubuntu:focal as build
+LABEL Developer "Andreas Till <andreas.till@netzint.de>"
 LABEL Maintainer "Lukas Spitznagel <lukas.spitznagel@netzint.de>"
 
 ENV TZ=Europe/Berlin
