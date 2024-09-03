@@ -100,15 +100,13 @@ fi
 
 # Save encryption file
 echo "save encryption file to server directory"
-if [ ! -f /opt/savapage/server/data/encryption.properties ]; then
-    echo "encryption file does not exist! copy to directory"
-    mv /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
+if [ -f /opt/savapage/server/data/encryption.properties ]; then
+    echo "encryption files exist, link to server..."
+    rm /opt/savapage/serverBuiltin/data/encryption.properties
+    ln -s /opt/savapage/server/data/encryption.properties /opt/savapage/serverBuiltin/data/encryption.properties
 else
-    echo "encryption file already exist!"
+    echo "encryption file does not exist!"
 fi
-
-rm /opt/savapage/serverBuiltin/data/encryption.properties
-ln -s /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
 
 # set savapage posix password
 echo -e "$SAVAPAGE_USER_PW\n$SAVAPAGE_USER_PW" | passwd savapage
@@ -223,7 +221,7 @@ else
 fi
 
 rm /opt/savapage/serverBuiltin/data/encryption.properties                           
-ln -s /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
+ln -s /opt/savapage/server/data/encryption.properties /opt/savapage/serverBuiltin/data/encryption.properties
 
 sed -i "s/#SAVAPAGE_UUID#/$SAVAPAGE_UUID/g" /etc/avahi/services/savapage.service
 sed -i "s/#SAVAPAGE_HOSTNAME#/$SAVAPAGE_HOSTNAME/g" /etc/avahi/services/savapage.service
