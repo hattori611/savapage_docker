@@ -214,15 +214,16 @@ do
 done
 /opt/savapage/server/bin/linux-x64/app-server-daemon stop
 
-# # Save encryption file
-# echo "save encryption file to server directory"
-# if [ ! -f /opt/savapage/server/$file ]; then
-#     echo "encryption file does not exist! copy to directory"
-#     mv /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
-# fi
+echo "save encryption file to server directory"
+if [ ! -f /opt/savapage/server/data/encryption.properties ]; then
+    echo "encryption file does not exist! copy to directory"
+    mv /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
+else
+    echo "encryption file already exist!"
+fi
 
-# rm /opt/savapage/serverBuiltin/data/encryption.properties
-# ln -s /opt/savapage/server/data/encryption.properties /opt/savapage/serverBuiltin/data/encryption.properties
+rm /opt/savapage/serverBuiltin/data/encryption.properties                           
+ln -s /opt/savapage/serverBuiltin/data/encryption.properties /opt/savapage/server/data/encryption.properties
 
 sed -i "s/#SAVAPAGE_UUID#/$SAVAPAGE_UUID/g" /etc/avahi/services/savapage.service
 sed -i "s/#SAVAPAGE_HOSTNAME#/$SAVAPAGE_HOSTNAME/g" /etc/avahi/services/savapage.service
